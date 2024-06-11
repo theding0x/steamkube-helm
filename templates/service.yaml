@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "steamkube.fullname" . }}
+  labels:
+    {{- include "steamkube.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+  {{- range .Values.servicePorts }}
+  - name: {{ .name }}
+    port: {{ .port }}
+    protocol: {{ .protocol }}
+  {{- end }}
+  selector:
+    {{- include "steamkube.selectorLabels" . | nindent 4 }}
