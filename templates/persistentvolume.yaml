@@ -1,0 +1,35 @@
+{{- if .Values.persistence.enabled -}}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: steamkube-{{ .Values.steamAppID}}-{{ .Release.Name }}-pv
+  labels:
+    {{- include "steamkube.labels" . | nindent 4 }}
+spec:
+  capacity:
+    storage: {{ .Values.persistence.size }}
+  claimRef:
+    name: steamkube-{{ .Values.steamAppID }}-{{ .Release.Name }}-pvc
+    namespace: {{ .Release.Namespace }}
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteMany
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: {{ .Values.persistence.storageClass }}
+  {{- if eq .Values.persistence.type "local" }}
+  local:
+    path: {{ .Values.persistence.path }}
+  {{- end }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - {{ .Values.persistence.nodeAffinity.hostname }}
+  {{- end -}}
+{{- if eq .Values.persistence.type "hostPath" }}
+  hostPath:
+    path: {{ .Values.persistence.path }}
+{{- end -}}

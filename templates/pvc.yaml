@@ -1,0 +1,19 @@
+{{- if .Values.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: steamkube-{{ .Values.steamAppID }}-{{ .Release.Name }}-pvc
+  labels:
+    {{- include "steamkube.labels" . | nindent 4 }}
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: {{ .Values.persistence.size }}
+  {{- with .Values.persistence.storageClass -}}
+  storageClassName: {{ . }}
+  {{- end -}}
+  volumeName: steamkube-{{ .Values.steamAppID }}-{{ .Release.Name }}-pv
+  volumeMode: Filesystem
+  {{- end -}}
