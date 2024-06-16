@@ -63,9 +63,14 @@ Create the name of the service account to use
 
 {{- define "steamkube.steamcmd.install" -}}
 @sSteamCmdForcePlatformType linux
-login anonymous
 force_install_dir /steamcmd/server
+login anonymous
 app_info_update 1
 app_update {{ .Values.steamAppID }} validate
 quit
+{{- end -}}
+{{- define "steamkube.server.config" -}}
+{{- range $key, $value := .Values.serverConfig -}}
+{{ $key }} {{ $value }}
+{{ end -}}
 {{- end -}}

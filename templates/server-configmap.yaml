@@ -38,3 +38,8 @@ data:
     		}
     	}
     }
+
+  server.cfg: >-
+    {{- if eq .Values.steamAppID "258550" -}}
+    {{- include "steamkube.server.config" . | nindent 4 }}
+    {{- end }}
