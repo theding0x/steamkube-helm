@@ -24,6 +24,15 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      initContainers:
+        - name: init-script
+          image: steamcmd/steamcmd:latest
+          command: [ '/usr/games/steamcmd', '+runscript /scripts/install.txt' ]
+          volumeMounts:
+            - name: script-volume
+              mountPath: /scripts
+            - name: server-data
+              mountPath: /steamcmd/server
       serviceAccountName: {{ include "steamkube.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
@@ -49,6 +58,13 @@ spec:
               port: server
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: script-volume
+              mountPath: /scripts
+            - name: config-volume
+              mountPath: /steamcmd/server/cfg
+            - name: server-data
+              mountPath: /steamcmd/server
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -61,3 +77,19 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      volumes:
+        - name: script-volume
+          configMap:
+            name: steamkube-{{ .Values.steamAppID }}
+            items:
+              - key: install.txt
+                path: install.txt
+        - name: config-volume
+          configMap:
+            name: steamkube-{{ .Values.steamAppID }}
+            items:
+              - key: rust.cfg
+                path: server.cfg
+        - name: server-data
+          persistentVolumeClaim:
+            claimName: steamkube-{{ .Values.steamAppID }}-{{ .Release.Name }}-pvc
