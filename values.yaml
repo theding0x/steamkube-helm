@@ -4,7 +4,7 @@
 
 replicaCount: 1
 
-steamAppID: "252490"
+steamAppID: "258550"
 
 image:
   repository: steamcmd/steamcmd
@@ -30,6 +30,13 @@ podAnnotations: {}
 podSecurityContext: {}
   # fsGroup: 2000
 
+persistence:
+  enabled: false
+  type: hostPath
+  path: /data/steamkube
+  #storageClass: ""
+  #accessMode: ReadWriteMany
+  #size: 30Gi
 securityContext: {}
   # capabilities:
   #   drop:
@@ -84,3 +91,5 @@ tolerations: []
 affinity: {}
 
 env: {}
+
+serverConfig: {}
