@@ -13,7 +13,7 @@ spec:
       storage: {{ .Values.persistence.size }}
   {{- with .Values.persistence.storageClass -}}
   storageClassName: {{ . }}
-  {{- end -}}
+  {{- end }}
   volumeName: steamkube-{{ .Values.steamAppID }}-{{ .Release.Name }}-pv
   volumeMode: Filesystem
   {{- end -}}
