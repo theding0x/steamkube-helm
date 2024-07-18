@@ -63,14 +63,21 @@ Create the name of the service account to use
 
 {{- define "steamkube.steamcmd.install" -}}
 @sSteamCmdForcePlatformType linux
-force_install_dir /steamcmd/server
+force_install_dir /steamcmd/server/data
 login anonymous
 app_info_update 1
 app_update {{ .Values.steamAppID }} validate
 quit
 {{- end -}}
 {{- define "steamkube.server.config" -}}
-{{- range $key, $value := .Values.serverConfig -}}
+{{- range $key, $value := .Values.server.config -}}
 {{ $key }} {{ $value }}
 {{ end -}}
+{{- end -}}
+{{- define "steamkube.server.start" -}}
+{{- if .Values.server.start -}}
+{{ .Values.server.start }}
+{{- else }}
+{{- printf "./srcds_run -game %s -console -usercon +sv_lan 0 +maxplayers %d +map %s" .Values.gameType .Values.maxPlayers .Values.map }}
+{{- end }}
 {{- end -}}

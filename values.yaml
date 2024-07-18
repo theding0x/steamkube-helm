@@ -37,6 +37,7 @@ persistence:
   #storageClass: ""
   #accessMode: ReadWriteMany
   #size: 30Gi
+useStatefulSet: true
 securityContext: {}
   # capabilities:
   #   drop:
