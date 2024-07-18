@@ -1,0 +1,107 @@
+{{- if .Values.useStatefulSet -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "steamkube.fullname" . }}
+  labels:
+    {{- include "steamkube.labels" . | nindent 4 }}
+spec:
+  serviceName: "{{ include "steamkube.fullname" . }}"
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "steamkube.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "steamkube.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        - name: init-script
+          image: steamcmd/steamcmd:latest
+          command: [ '/usr/games/steamcmd', '+runscript /scripts/install.txt' ]
+          volumeMounts:
+            - name: script-volume
+              mountPath: /scripts
+            - name: server-data
+              mountPath: /steamcmd/server/data
+      serviceAccountName: {{ include "steamkube.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          command:
+            - {{ include "steamkube.server.start" . }}
+          {{- with .Values.server.env }}
+          env:
+          {{- range $name, $value := . }}
+            - name: {{ $name }}
+              value: {{ $value | quote }}
+          {{- end }}
+          {{- end }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+          {{- range .Values.servicePorts }}
+            - name: {{ .name }}
+              containerPort: {{ .containerPort }}
+              protocol: {{ .protocol }}
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: server
+          readinessProbe:
+            httpGet:
+              path: /
+              port: server
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: script-volume
+              mountPath: /scripts
+            - name: config-volume
+              mountPath: /steamcmd/server/cfg
+            - name: server-data
+              mountPath: /steamcmd/server/data
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: script-volume
+          configMap:
+            name: steamkube-{{ .Values.steamAppID }}
+            items:
+              - key: install.txt
+                path: install.txt
+        - name: config-volume
+          configMap:
+            name: steamkube-{{ .Values.steamAppID }}
+            items:
+              - key: server.cfg
+                path: "steamkube-{{ .Values.steamAppID }}"
+        - name: server-data
+          persistentVolumeClaim:
+            claimName: steamkube-{{ .Values.steamAppID }}-{{ .Release.Name }}-pvc
+{{- end }}
